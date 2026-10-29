@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Krumb is in early development: any 0.x release may contain breaking changes.
 Semantic Versioning applies from 1.0.0.
 
-## [Unreleased]
+## [0.1.0] - 2026-10-29
 
 ### Added
 - Severity levels (`krumb::level`) with `to_string`.
