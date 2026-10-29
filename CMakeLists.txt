@@ -15,6 +15,13 @@ option(KRUMB_WARNINGS_AS_ERRORS "Treat warnings as errors when building Krumb" O
 add_library(krumb STATIC)
 add_library(krumb::krumb ALIAS krumb)
 
+# SOURCES ------------------------------------------------------------------------------------------------------------------------------------------|
+target_sources(krumb PRIVATE
+    src/formatters/text_formatter.cpp
+    src/sinks/console_sink.cpp
+    src/logger.cpp
+)
+
 # INCLUDES -----------------------------------------------------------------------------------------------------------------------------------------|
 target_include_directories(krumb
     PUBLIC
