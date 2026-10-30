@@ -1,8 +1,9 @@
 #pragma once
 
-#include <krumb/logger.hpp>
-
 #include <krumb/core/level.hpp>
+
+#include <krumb/logger.hpp>
+#include <krumb/logger_builder.hpp>
 
 #include <krumb/sinks/sink.hpp>
 #include <krumb/sinks/file_sink.hpp>

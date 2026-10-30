@@ -22,6 +22,7 @@ target_sources(krumb PRIVATE
     src/sinks/console_sink.cpp
     src/sinks/file_sink.cpp
     src/logger.cpp
+    src/logger_builder.cpp
 )
 
 # INCLUDES -----------------------------------------------------------------------------------------------------------------------------------------|
