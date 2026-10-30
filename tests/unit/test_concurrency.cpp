@@ -151,3 +151,70 @@ TEST_CASE("the error handler can be replaced while threads log") {
     // No assertion on counts: the handler changes constantly. The point is that nothing crashes or races.
     CHECK(true);
 }
+
+TEST_CASE("every sink of a multi-sink logger receives every message under contention") {
+    auto first = std::make_shared<test::recording_sink>();
+    auto second = std::make_shared<test::recording_sink>();
+    krumb::logger logger = krumb::logger_builder()
+        .min_level(krumb::level::trace)
+        .add_sink(first)
+        .add_sink(second)
+        .build();
+
+    run_threads(thread_count, [&logger](int id) {
+        for (int n = 0; n < messages_per_thread; n++) {
+            logger.log(krumb::level::info, "thread {} message {}", id, n);
+        }
+    });
+
+    CHECK(first->messages().size() == total_messages);
+    CHECK(second->messages().size() == total_messages);
+}
+
+TEST_CASE("handles copied on different threads share one logger") {
+    auto sink = std::make_shared<test::recording_sink>();
+    krumb::logger logger{sink};
+
+    run_threads(thread_count, [logger](int id) mutable {
+        for (int n = 0; n < messages_per_thread; n++) {
+            logger.log(krumb::level::info, "thread {} message {}", id, n);
+        }
+    });
+
+    CHECK(sink->messages().size() == total_messages);
+}
+
+TEST_CASE("replacing the default logger while threads use it loses no message") {
+    auto first = std::make_shared<test::recording_sink>();
+    auto second = std::make_shared<test::recording_sink>();
+    krumb::logger first_logger = krumb::logger_builder().min_level(krumb::level::trace).add_sink(first).build();
+    krumb::logger second_logger = krumb::logger_builder().min_level(krumb::level::trace).add_sink(second).build();
+    const krumb::logger previous = krumb::default_logger();
+    std::atomic<bool> done{false};
+
+    krumb::set_default_logger(first_logger);
+
+    std::thread replacer([&] {
+        bool use_second = false;
+
+        while (!done.load()) {
+            krumb::set_default_logger(use_second ? second_logger : first_logger);
+            use_second = !use_second;
+            std::this_thread::yield();
+        }
+    });
+
+    run_threads(thread_count, [](int id) {
+        for (int n = 0; n < messages_per_thread; n++) {
+            krumb::info("thread {} message {}", id, n);
+        }
+    });
+
+    done.store(true);
+    replacer.join();
+
+    krumb::set_default_logger(previous);
+
+    // each message goes to exactly one of the two loggers, whichever was the default at that moment.
+    CHECK(first->messages().size() + second->messages().size() == total_messages);
+}

@@ -102,13 +102,14 @@ TEST_CASE("filtered messages are not formatted") {
 TEST_CASE("free functions control the default logger") {
     const krumb::level previous = krumb::get_level();
 
-    CHECK(&krumb::default_logger() == &krumb::default_logger());
+    // a handle shares state with the default logger, so a change through the free functions is visible through it.
+    krumb::logger handle = krumb::default_logger();
 
     krumb::set_level(krumb::level::error);
 
     CHECK(krumb::get_level() == krumb::level::error);
-    CHECK(krumb::default_logger().get_level() == krumb::level::error);
-    CHECK_FALSE(krumb::default_logger().should_log(krumb::level::info));
+    CHECK(handle.get_level() == krumb::level::error);
+    CHECK_FALSE(handle.should_log(krumb::level::info));
 
     krumb::set_level(previous);
 }
@@ -210,7 +211,7 @@ TEST_CASE("a failing write goes to the error handler and does not throw") {
     CHECK_NOTHROW(logger.log(krumb::level::error, "this write fails"));
 
     REQUIRE(errors.size() == 1);
-    CHECK(errors[0] == "sink failed: simulated write error");
+    CHECK(errors[0] == "sink 0 write failed: simulated write error");
 }
 
 TEST_CASE("a failing flush goes to the error handler and does not throw") {
@@ -224,7 +225,7 @@ TEST_CASE("a failing flush goes to the error handler and does not throw") {
     CHECK_NOTHROW(logger.flush());
 
     REQUIRE(errors.size() == 1);
-    CHECK(errors[0] == "flush failed: simulated flush error");
+    CHECK(errors[0] == "sink 0 flush failed: simulated flush error");
 }
 
 TEST_CASE("a formatting failure goes to the error handler and drops the message") {

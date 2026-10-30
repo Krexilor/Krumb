@@ -7,6 +7,7 @@ add_executable(krumb_tests
     unit/test_format_string.cpp
     unit/test_text_formatter.cpp
     unit/test_logger.cpp
+    unit/test_logger_builder.cpp
     unit/test_file_sink.cpp
     unit/test_concurrency.cpp
 )
