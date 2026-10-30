@@ -3,30 +3,28 @@
 #include <cstdio>
 #include <system_error>
 
+#ifdef _WIN32
+#include <share.h>
+#endif
+
 // PROJECT HEADERS ---------------------------------------------------------------------------------------------------------------------------------|
 #include <krumb/sinks/file_sink.hpp>
 
 // FILE SINK ---------------------------------------------------------------------------------------------------------------------------------------|
 namespace krumb {
     file_sink::file_sink(const std::filesystem::path& path, mode open_mode) {
-        int error = 0;
-
         #ifdef _WIN32
             // _wfopen_s accepts the native wide path, so non-ASCII file names work, and it avoids MSVC's deprecation warning for fopen.
             const wchar_t* flags = (open_mode == mode::append) ? L"ab" : L"wb";
-            error = static_cast<int>(_wfopen_s(&file_, path.c_str(), flags));
+            file_ = _wfsopen(path.c_str(), flags, _SH_DENYNO);
 
         #else
             const char* flags = (open_mode == mode::append) ? "ab" : "wb";
             file_ = std::fopen(path.c_str(), flags);
-
-            if (file_ == nullptr) {
-                error = errno;
-            }
         
         #endif
             if (file_ == nullptr) {
-                throw std::system_error(error, std::generic_category(), "krumb: cannot open log file '" + path.string() + "'");
+                throw std::system_error(errno, std::generic_category(), "krumb: cannot open log file '" + path.string() + "'");
             }
     }
 

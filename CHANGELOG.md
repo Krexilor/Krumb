@@ -34,6 +34,7 @@ Semantic Versioning applies from 1.0.0.
 - Written reliability contract (thread safety, failures, flushing, shutdown) in `logger.hpp`.
 - Tests for file I/O, flushing, error handling, and concurrency, plus a recording test sink.
 - `KRUMB_ENABLE_TSAN` option and a ThreadSanitizer CI job.
+- File logging added to the example.
 
 ### Changed
 - `logger` takes a `std::shared_ptr<sink>`; sinks format events themselves.

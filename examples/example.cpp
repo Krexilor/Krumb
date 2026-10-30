@@ -1,12 +1,16 @@
 // STANDARD HEADERS --------------------------------------------------------------------------------------------------------------------------------|
 #include <thread>
 #include <vector>
+#include <memory>
+#include <iostream>
+#include <exception>
+#include <string_view>
 
 // PROJECT HEADERS ---------------------------------------------------------------------------------------------------------------------------------|
 #include <krumb/krumb.hpp>
 
 // EXAMPLE -----------------------------------------------------------------------------------------------------------------------------------------|
-// the simple features of Krumb in one file, from the first log line to threads.
+// The simple features of Krumb in one file, from the first log line to threads.
 int main() {
     // 1. zero setup: include the header and log.
     krumb::info("Hello, {}!", "krumb");
@@ -57,6 +61,25 @@ int main() {
 
     for (std::thread& worker : workers) {
         worker.join();
+    }
+
+    // 8. file logging: a logger can write to a file instead of the console.
+    try {
+        auto file = std::make_shared<krumb::file_sink>("krumb_example.log", krumb::file_sink::mode::truncate);
+        krumb::logger file_logger{file};
+
+        file_logger.set_error_handler([](std::string_view description) {
+            std::cerr << "logging problem: " << description << "\n";
+        });
+
+        file_logger.log(krumb::level::info, "written to the file only");
+        file_logger.log(krumb::level::error, "an error is on disk right away");
+        file_logger.flush();
+
+        krumb::info("file logging done, see krumb_example.log");
+    } 
+    catch (const std::exception& ex) {
+        krumb::error("could not set up file logging: {}", ex.what());
     }
 
     return 0;
