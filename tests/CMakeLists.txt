@@ -1,13 +1,17 @@
 # TARGET -------------------------------------------------------------------------------------------------------------------------------------------|
+find_package(Threads REQUIRED)
+
 add_executable(krumb_tests
     unit/main.cpp
     unit/test_level.cpp
     unit/test_format_string.cpp
     unit/test_text_formatter.cpp
     unit/test_logger.cpp
+    unit/test_file_sink.cpp
+    unit/test_concurrency.cpp
 )
 
-target_link_libraries(krumb_tests PRIVATE krumb::krumb)
+target_link_libraries(krumb_tests PRIVATE krumb::krumb Threads::Threads)
 target_include_directories(krumb_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # DOCTEST ------------------------------------------------------------------------------------------------------------------------------------------|
