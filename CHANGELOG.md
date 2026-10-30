@@ -23,3 +23,25 @@ Semantic Versioning applies from 1.0.0.
 - Timestamps are UTC only.
 - Logging from static destructors is unsupported.
 
+## [0.2.0] - 2026-10-30
+
+### Added
+- `sink` base class for custom destinations.
+- `file_sink` with append and truncate modes.
+- `logger::flush`, `set_flush_level` (default `error`), and `krumb::flush()`.
+- The logger flushes its sink when destroyed.
+- `logger::set_error_handler`; the default handler prints to stderr.
+- Written reliability contract (thread safety, failures, flushing, shutdown) in `logger.hpp`.
+- Tests for file I/O, flushing, error handling, and concurrency, plus a recording test sink.
+- `KRUMB_ENABLE_TSAN` option and a ThreadSanitizer CI job.
+
+### Changed
+- `logger` takes a `std::shared_ptr<sink>`; sinks format events themselves.
+- Locking moved from the logger into the sinks, so one sink can be shared by several loggers.
+- Sink and formatting failures no longer propagate to the caller; they go to the error handler.
+
+### Known limitations
+- A persistently failing sink reports every failed write to the error handler; there is no rate limiting.
+- The error handler can be called from the logger's destructor; its captured state must outlive the logger.
+- Timestamps are UTC only.
+- Logging from static destructors is unsupported.
