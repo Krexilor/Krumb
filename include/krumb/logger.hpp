@@ -25,6 +25,14 @@
 //     and the message is dropped. the default handler prints one line to stderr. exceptions thrown by a handler are ignored.
 //   - after a failed write, that sink is not flushed for the same message.
 //
+// custom sinks and formatters
+//   - a class derived from line_sink needs no locking: output() and flush_output() are called one thread at a time.
+//     anything else it exposes to other threads, such as a getter, needs its own lock.
+//   - a formatter belongs to one sink and is called under that sink's lock, one thread at a time. do not share a formatter between sinks.
+//   - a class derived directly from sink must be thread-safe itself.
+//   - an invalid pattern throws std::invalid_argument when the pattern_formatter is constructed. logging never throws because of a pattern.
+//   - the console sink decides about color once, when it is constructed.
+//
 // flushing
 //   - flush() flushes every sink now.
 //   - after a message at or above the flush level (default: error) the sinks that received it are flushed. `off` disables this.

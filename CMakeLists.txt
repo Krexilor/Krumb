@@ -18,7 +18,8 @@ add_library(krumb::krumb ALIAS krumb)
 
 # SOURCES ------------------------------------------------------------------------------------------------------------------------------------------|
 target_sources(krumb PRIVATE
-    src/formatters/text_formatter.cpp
+    src/formatters/pattern_formatter.cpp
+    src/sinks/line_sink.cpp
     src/sinks/console_sink.cpp
     src/sinks/file_sink.cpp
     src/logger.cpp
