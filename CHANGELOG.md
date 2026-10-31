@@ -69,3 +69,29 @@ Semantic Versioning applies from 1.0.0.
 - Every free-function call takes a short lock to read the default logger.
 - Timestamps are UTC only.
 - Logging from static destructors is unsupported.
+
+## [0.4.0] - 2026-10-31
+
+### Added
+- `formatter` interface and `pattern_formatter`: patterns such as `[{time:%F %T}] [{level:>5}] {message}` with the fields time, level, LEVEL, file, path, line, function and message. Invalid patterns throw `std::invalid_argument` at construction.
+- `line_sink`: a base class for custom text sinks. It owns the formatter, lock and buffer; a subclass only implements `output` and `flush_output`.
+- Console color by level, with `color_mode` (`automatic`, `always`, `never`). Automatic mode honors `NO_COLOR` and `TERM=dumb`.
+- `console_options` selects the console stream, so `stderr` can be used.
+- Advanced example (`examples/custom_sink`): a custom formatter, a custom `line_sink`, and a custom raw `sink`, mixed with built-in sinks.
+- Tests for patterns, line sinks, console color, and concurrent use of a shared sink.
+
+### Changed
+- `text_formatter` is replaced by `pattern_formatter`; its default pattern produces the same output.
+- `console_sink` and `file_sink` are built on `line_sink`, and both accept a custom formatter.
+- The reliability contract in `logger.hpp` now covers custom sinks and formatters.
+
+### Known limitations
+- A persistently failing sink reports every failed write to the error handler; there is no rate limiting.
+- The error handler can be called when the last handle of a logger is destroyed; its captured state must outlive the logger.
+- A logger's sinks and their thresholds are fixed when it is built. The logger level and flush level can change at runtime.
+- One logger object must not be assigned to while another thread uses that same object; give each thread its own handle.
+- Every free-function call takes a short lock to read the default logger.
+- Console color colors the whole line by level; colors are fixed and cannot be configured.
+- A formatter belongs to one sink and cannot be shared between sinks.
+- Timestamps are UTC, with millisecond precision.
+- Logging from static destructors is unsupported.
