@@ -35,6 +35,46 @@ namespace {
             thread.join();
         }
     }
+
+    // Reports whether two threads were ever inside format() at the same time.
+    class exclusive_formatter : public krumb::formatter {
+        public:
+        exclusive_formatter(std::atomic<int>& inside, std::atomic<bool>& overlapped) : inside_(inside), overlapped_(overlapped) {}
+
+        void format(const krumb::event& ev, std::string& out) override {
+            if (inside_.fetch_add(1) != 0) {
+                overlapped_.store(true);
+            }
+
+            std::this_thread::yield();
+
+            out += ev.message;
+            inside_.fetch_sub(1);
+        }
+
+        private:
+        std::atomic<int>& inside_;
+        std::atomic<bool>& overlapped_;
+    };
+
+    // Counts lines. output() runs with the sink's lock held, so the counter needs no lock of its own.
+    class counting_sink : public krumb::line_sink {
+        public:
+        using line_sink::line_sink;
+
+        std::size_t line_count() const {
+            return lines_;
+        }
+
+        private:
+        void output(krumb::level, std::string_view) override {
+            lines_++;
+        }
+
+        void flush_output() override {}
+
+        std::size_t lines_ = 0;
+    };
 }
 
 // CONCURRENCY TESTS -------------------------------------------------------------------------------------------------------------------------------|
@@ -217,4 +257,23 @@ TEST_CASE("replacing the default logger while threads use it loses no message") 
 
     // each message goes to exactly one of the two loggers, whichever was the default at that moment.
     CHECK(first->messages().size() + second->messages().size() == total_messages);
+}
+
+TEST_CASE("a sink calls its formatter and output one thread at a time") {
+    std::atomic<int> inside{0};
+    std::atomic<bool> overlapped{false};
+    auto sink = std::make_shared<counting_sink>(std::make_unique<exclusive_formatter>(inside, overlapped));
+    krumb::logger first{sink};
+    krumb::logger second{sink};
+
+    run_threads(thread_count, [&](int id) {
+        krumb::logger& target = (id % 2 == 0) ? first : second;
+
+        for (int n = 0; n < messages_per_thread; n++) {
+            target.log(krumb::level::info, "thread {} message {}", id, n);
+        }
+    });
+
+    CHECK_FALSE(overlapped.load());
+    CHECK(sink->line_count() == total_messages);
 }

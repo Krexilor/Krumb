@@ -124,3 +124,22 @@ TEST_CASE("two loggers can share one file sink") {
 
     CHECK(test::split_lines(test::read_file(file.path())).size() == 2);
 }
+
+TEST_CASE("file sink accepts a custom formatter") {
+    test::temp_file file{"krumb_test_formatter.log"};
+
+    {
+        auto sink = std::make_shared<krumb::file_sink>(file.path(), std::make_unique<krumb::pattern_formatter>("{level}|{message}"));
+        krumb::logger logger{sink};
+
+        logger.log(krumb::level::info, "hello");
+    }
+
+    CHECK(test::read_file(file.path()) == "info|hello\n");
+}
+
+TEST_CASE("file sink rejects a null formatter") {
+    test::temp_file file{"krumb_test_null_formatter.log"};
+
+    CHECK_THROWS_AS(krumb::file_sink(file.path(), std::unique_ptr<krumb::formatter>{}), std::invalid_argument);
+}

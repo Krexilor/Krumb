@@ -2,6 +2,7 @@
 
 // STANDARD HEADERS --------------------------------------------------------------------------------------------------------------------------------|
 #include <mutex>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -10,6 +11,10 @@
 #include <stdexcept>
 #include <filesystem>
 #include <system_error>
+
+#ifdef _WIN32
+#include <share.h>
+#endif
 
 // PROJECT HEADERS ---------------------------------------------------------------------------------------------------------------------------------|
 #include <krumb/sinks/sink.hpp>
@@ -97,6 +102,34 @@ namespace test {
         }
 
         std::filesystem::path path_;
+    };
+
+    class stream_file {
+        public:
+        explicit stream_file(const std::filesystem::path& path) {
+            #ifdef _WIN32
+                file_ = _wfsopen(path.c_str(), L"wb", _SH_DENYNO);
+            #else
+                file_ = std::fopen(path.c_str(), "wb");
+            #endif
+                if (file_ == nullptr) {
+                    throw std::runtime_error("cannot open test stream");
+                }
+        }
+
+        ~stream_file() {
+            std::fclose(file_);
+        }
+
+        stream_file(const stream_file&) = delete;
+        stream_file& operator = (const stream_file&) = delete;
+
+        std::FILE* get() const {
+            return file_;
+        }
+
+        private:
+        std::FILE* file_ = nullptr;
     };
 
     inline std::string read_file(const std::filesystem::path& path) {
