@@ -62,7 +62,7 @@ namespace {
             std::size_t size = 0;
             std::string result;
 
-            if (_dupnev_s(&value, &size, name) == 0 && value != nullptr) {
+            if (_dupenv_s(&value, &size, name) == 0 && value != nullptr) {
                 result = value;
             }
 
@@ -86,7 +86,7 @@ namespace {
 
     bool enable_virtual_terminal(std::FILE* stream) {
         #ifdef _WIN32
-            const std::intptr_t raw = _get_osfhandler(_fileno(stream));
+            const std::intptr_t raw = _get_osfhandle(_fileno(stream));
 
             if (raw == -1) {
                 return false;
